@@ -1,0 +1,5 @@
+*.pyc
+*.swp
+*.swo
+old_*
+results_tmg*
