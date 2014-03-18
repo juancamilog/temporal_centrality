@@ -21,5 +21,9 @@ if __name__ == "__main__":
         print "\t%s\t|\tAggregated\t|\t%f\t|\t%f\t|\t%f\t|"%(v,static_stats[0][0][v],static_stats[0][1][v],static_stats[0][2][v])
         print "\t%s\t|\tAverage  \t|\t%f\t|\t%f\t|\t%f\t|"%(v,static_stats[1][0][v],static_stats[1][1][v],static_stats[1][2][v])
 
+    #t = 0
+    #for G_t in G.snapshots:
+
+
     G.draw_time_ordered_graph()
     plt.show()

@@ -2,6 +2,7 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
+from sets import Set
 
 class temporal_graph:
     # construct a temporal network that has snapshots from time 0 until time t_end
@@ -179,7 +180,7 @@ def compute_temporal_closeness(G,start_time,end_time):
         if t < end_time:
             # closeness is the sum of inverse shortest path distances for all v and u (with v!= u)
             closeness += (1/D_t - np.eye(n)).sum(1)
-        print "closeness computation done for time %d"%(t)
+        #print "closeness computation done for time %d"%(t)
 
     # at the end, we normalize closeness by (|V| - 1)*m
     closeness = closeness/((n-1)*m)
@@ -263,10 +264,17 @@ def compute_temporal_betweenness(G,start_time,end_time):
     n = len(verts)
     m = end_time - start_time
     labels = {}
+    # sets for computing the correct normalization values
+    V_s = [None]*n
+    V_d = [None]*n
     # compute integer labels
     idx = 0
     for v in verts:
         labels[v] = idx
+        V_s[idx] = Set()
+        V_s[idx].add(idx)
+        V_d[idx] = Set()
+        V_d[idx].add(idx)
         idx = idx + 1
     
     # this dictionary stores the distance matrices D_t
@@ -275,6 +283,7 @@ def compute_temporal_betweenness(G,start_time,end_time):
     S = {}
     # this stores the cumulative closeness score of G
     betweenness = np.zeros(n)
+
     for t in xrange(end_time,start_time-1,-1): # m time steps
         # this matrix stores the distances at time t
         D[t] = np.ones((n,n))*np.inf
@@ -327,6 +336,8 @@ def compute_temporal_betweenness(G,start_time,end_time):
                     if S[k][vi,di] > 0:
                         d_tk = D[t][si,vi]
                         d_kj = D[k][vi,di]
+                        V_s[vi].add(si)
+                        V_d[vi].add(di)
                         if D[t][si,di] == d_tk + d_kj:
                             if np.isnan(S[t][si,vi]*S[k][vi,di]/S[t][si,di]):
                                 print "Whoops! %d %d %d"%(si,vi,di)
@@ -340,9 +351,15 @@ def compute_temporal_betweenness(G,start_time,end_time):
                 # end for vi
             # end for di
         # end for si
-        print "betweenness computation done for time %d"%(t)
-        print "number of vertex triplets visited for betweennness %d"%(total_its)
-    betweenness = betweenness/(0.5*(n-1)*(n-2)*m)
+        #print "betweenness computation done for time %d"%(t)
+        #print "number of vertex triplets visited for betweennness %d"%(total_its)
+    #betweenness = betweenness/(0.5*(n-1)*(n-2)*m)
+    print V_s
+    print V_d
+    norm_ct = np.array([(0.5*m*len(V_s[vi])*len(V_d[vi])) for vi in xrange(n)])
+    print norm_ct
+    betweenness = np.divide(betweenness,0.5*np.power(norm_ct,1))
+
     return dict(zip(verts,betweenness))
 
 def compute_static_graph_statistics(G,start_time,end_time):

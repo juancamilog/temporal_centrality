@@ -6,6 +6,13 @@ import cPickle
 from matplotlib import pyplot as plt
 import numpy as np
 
+import matplotlib
+
+font = {'style' : 'normal',
+        'size'   : 22}
+
+matplotlib.rc('font', **font)
+
 def load(path = './bt_trace.pickle'):
     f = gzip.GzipFile(path, 'rb')
     data = cPickle.load(f)
@@ -74,11 +81,11 @@ plt.title("Degree")
 
 r_values = [res['mean']['agg_deg'],res['mean']['avg_deg'],res['mean']['t_deg']]
 r_std = [res['std']['agg_deg'],res['std']['avg_deg'],res['std']['t_deg']]
-plt.bar(c,r_values,w,color='r', label='Resident',yerr=r_std,error_kw=error_config)
+plt.bar(c,r_values,w,color='w', label='Resident',yerr=r_std,error_kw=error_config)
 
 m_values = [mer['mean']['agg_deg'],mer['mean']['avg_deg'],mer['mean']['t_deg']]
 m_std = [mer['std']['agg_deg'],mer['std']['avg_deg'],mer['std']['t_deg']]
-plt.bar(c+w, m_values,w,color='b', label='Merchant',yerr=r_std,error_kw=error_config)
+plt.bar(c+w, m_values,w,color='k', label='Merchant',yerr=r_std,error_kw=error_config)
 
 plt.xticks(c+w,labels)
 plt.legend()
@@ -91,11 +98,11 @@ plt.title("Closeness")
 
 r_values = [res['mean']['agg_cl'],res['mean']['avg_cl'],res['mean']['t_cl']]
 r_std = [res['std']['agg_cl'],res['std']['avg_cl'],res['std']['t_cl']]
-plt.bar(c,r_values,w,color='r', label='Resident',yerr=r_std,error_kw=error_config)
+plt.bar(c,r_values,w,color='w', label='Resident',yerr=r_std,error_kw=error_config)
 
 m_values = [mer['mean']['agg_cl'],mer['mean']['avg_cl'],mer['mean']['t_cl']]
 m_std = [mer['std']['agg_cl'],mer['std']['avg_cl'],mer['std']['t_cl']]
-plt.bar(c+w, m_values,w,color='b', label='Merchant',yerr=r_std,error_kw=error_config)
+plt.bar(c+w, m_values,w,color='k', label='Merchant',yerr=r_std,error_kw=error_config)
 
 plt.xticks(c+w,labels)
 plt.legend()
@@ -108,11 +115,11 @@ plt.title("Betweenness")
 
 r_values = [res['mean']['agg_bt'],res['mean']['avg_bt'],res['mean']['t_bt']]
 r_std = [res['std']['agg_bt'],res['std']['avg_bt'],res['std']['t_bt']]
-plt.bar(c,r_values,w,color='r', label='Resident',yerr=r_std,error_kw=error_config)
+plt.bar(c,r_values,w,color='w', label='Resident',yerr=r_std,error_kw=error_config)
 
 m_values = [mer['mean']['agg_bt'],mer['mean']['avg_bt'],mer['mean']['t_bt']]
 m_std = [mer['std']['agg_bt'],mer['std']['avg_bt'],mer['std']['t_bt']]
-plt.bar(c+w, m_values,w,color='b', label='Merchant',yerr=r_std,error_kw=error_config)
+plt.bar(c+w, m_values,w,color='k', label='Merchant',yerr=r_std,error_kw=error_config)
 
 plt.xticks(c+w,labels)
 plt.legend()
