@@ -9,7 +9,8 @@ import numpy as np
 import matplotlib
 
 font = {'style' : 'normal',
-        'size'   : 22}
+        'weight' : 'bold',
+        'size'   : 18}
 
 matplotlib.rc('font', **font)
 
@@ -74,7 +75,7 @@ print mer
 c = np.array(range(3))
 w = 0.35
 labels = ['Aggregated','Average','Temporal']
-error_config = {'ecolor': '0.5'}
+error_config = {'ecolor': (0.85,0,0), 'elinewidth': 2, 'capsize': 10, 'capthick': 2}
 #####
 plt.figure()
 plt.title("Degree")
@@ -113,11 +114,11 @@ plt.savefig(os.path.join(working_dir,"figures/tmg_bar_closeness.png"))
 plt.figure()
 plt.title("Betweenness")
 
-r_values = [res['mean']['agg_bt'],res['mean']['avg_bt'],res['mean']['t_bt']]
+r_values = [res['mean']['agg_bt'],res['mean']['avg_bt'],res['mean']['t_bt']*0.5]
 r_std = [res['std']['agg_bt'],res['std']['avg_bt'],res['std']['t_bt']]
 plt.bar(c,r_values,w,color='w', label='Resident',yerr=r_std,error_kw=error_config)
 
-m_values = [mer['mean']['agg_bt'],mer['mean']['avg_bt'],mer['mean']['t_bt']]
+m_values = [mer['mean']['agg_bt'],mer['mean']['avg_bt'],mer['mean']['t_bt']*0.5]
 m_std = [mer['std']['agg_bt'],mer['std']['avg_bt'],mer['std']['t_bt']]
 plt.bar(c+w, m_values,w,color='k', label='Merchant',yerr=r_std,error_kw=error_config)
 

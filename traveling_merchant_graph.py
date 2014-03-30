@@ -56,7 +56,8 @@ class TMG:
         self.current_timestep = 0
 
     def simulate(self, timesteps):
-        for time in xrange(timesteps):
+        for time in xrange(1,timesteps):
+            self.current_timestep += 1
             # interal movement
             # for each village
             for i in xrange(0,self.nu):
@@ -118,15 +119,14 @@ class TMG:
 
             #add current edges to the temporal graph
             self.temporal_graph.append_snapshot(self.graph)
-            self.current_timestep += 1
 
 
     def compute_statistics(self, start_time=0, end_time=1):
         end_time=self.current_timestep
+        static_stats = compute_static_graph_statistics(self.temporal_graph,start_time,end_time)
         tdeg = compute_temporal_degree(self.temporal_graph,start_time,end_time)
         tcl = compute_temporal_closeness(self.temporal_graph,start_time,end_time)
         tbt = compute_temporal_betweenness(self.temporal_graph,start_time,end_time)
-        static_stats = compute_static_graph_statistics(self.temporal_graph,start_time,end_time)
         return (tdeg,tcl,tbt,static_stats)
 
     def get_statistics(self,start_time=0,end_time=1):

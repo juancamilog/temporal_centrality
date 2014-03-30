@@ -37,7 +37,6 @@ class temporal_graph:
                new_edges = [((v,t-1),(v,t)) for v in verts]
                self.time_ordered_graph.add_edges_from(new_edges)
             t = t + 1
-
     # add an edge to the subset of snapshots G_{start_time} to G_{end_time}
     # the edges should come in a tuple ((v_1,v_2), (start_time, end_time))
     def add_temporal_edges(self,edges):
@@ -58,6 +57,7 @@ class temporal_graph:
 
             # add edges to the snapshots
             for t in xrange(start_time, end_time+1):
+
                 self.snapshots[t].add_edge(e[0][0],e[0][1])
                 if t > 0:
                     # add edges to the time ordered graph ( from t-1 to t)
@@ -70,17 +70,25 @@ class temporal_graph:
     # add a graph snapshot to the end of the current snapshot list.
     def append_snapshot(self,G_t):
         self.t_end = self.t_end+1
+        t= self.t_end
         # TODO check that we are passing a valid snapshot (same vertex set)
-        self.snapshots.append(nx.Graph(G_t))
+        self.snapshots.append(nx.Graph())
+        self.snapshots[t].add_nodes_from(self.vertices)
         edgeset = G_t.edges()
+
         # get timestamped edges from current snapshot
         new_edges = zip(edgeset,[(self.t_end,self.t_end)]*len(edgeset))
-        # append self edges from previous timestep to the current timestep
-        for v in self.vertices:
-            new_edges.append(((v,v),(self.t_end-1,self.t_end)))
-
         # add list of new edges to the temporal graph
         self.add_temporal_edges(new_edges)
+
+        # append self edges from previous timestep to the current timestep
+        new_edges = [((v,t-1),(v,t)) for v in G_t.nodes_iter()]
+        self.time_ordered_graph.add_edges_from(new_edges)
+
+        #if self.t_end>1:
+        #self.draw_snapshot(self.t_end)
+        #    self.draw_time_ordered_graph()
+        #    plt.show()
 
     # draw the snapshot of the network at time t
     def draw_snapshot (self,t,labels =None):
@@ -109,10 +117,11 @@ class temporal_graph:
         npos = {}
         labels = {}
         # now, for every time step we select a horizontal coordinate and populate the layout dictionary
+        
+        print self.time_ordered_graph.nodes()
         for v in self.time_ordered_graph.nodes():
             npos[v] = np.array((h_scale*v[1],v_pos[v[0]]))
             labels[v] = "$%s_{%d}$"%(v[0],v[1])
-
         nx.draw(self.time_ordered_graph, pos = npos, with_labels=False, node_color='w', node_size=1000)
         nx.draw_networkx_labels(self.time_ordered_graph, npos, labels)
         plt.draw()
@@ -122,18 +131,24 @@ def compute_temporal_degree(G,start_time,end_time):
     verts = G.vertices
     n = len(verts)
     m = end_time - start_time
+    labels = {}
+    # compute integer labels
+    idx = 0
+    for v in verts:
+        labels[v] = idx
+        idx = idx + 1
     
     # for every v in V, we sum the indegree and outdegree at every timestep, excluding the edges
     # from v_t to v_{t+1} (there are m such edges)
-    vi = 0
     timestamps = range(start_time,end_time+1)
     # this stores the average degree of G
     degree = np.zeros(n)
     for v in verts:
         v_t = zip([v]*(m+1),timestamps)
-        degree[vi] += sum(G.time_ordered_graph.degree(v_t).values()) - 2*m
-        vi = vi + 1
-    degree = degree/(2*(n-1)*m)
+        vi = labels[v]
+        # edges - self_edges
+        degree[vi] = 0.5*sum(G.time_ordered_graph.degree(v_t).values()) - m
+    degree = degree/((n-1)*m)
     return dict(zip(verts, degree))
 
 # compute the temporal closeness score
@@ -331,57 +346,73 @@ def compute_temporal_betweenness(G,start_time,end_time):
                     # there should exist a path between s and v
                     if S[t][si,vi] <= 0:
                         continue
-                    k = D[t][si,vi] + t
+                    k_0 = int(D[t][si,vi]) + t
                     total_its +=1
-                    if S[k][vi,di] > 0:
-                        d_tk = D[t][si,vi]
-                        d_kj = D[k][vi,di]
-                        V_s[vi].add(si)
-                        V_d[vi].add(di)
-                        if D[t][si,di] == d_tk + d_kj:
-                            if np.isnan(S[t][si,vi]*S[k][vi,di]/S[t][si,di]):
-                                print "Whoops! %d %d %d"%(si,vi,di)
-                                print (S[t][si,vi],S[k][vi,di],S[t][si,di])
-                                raw_input()
-                            betweenness[vi] += S[t][si,vi]*S[k][vi,di]/S[t][si,di]
-                            if np.isnan(betweenness[vi]):
-                                print "Whoops! bt is nan, %d %d %d"%(si,vi,di)
-                                print (S[t][si,vi],S[k][vi,di],S[t][si,di])
-                                raw_input()
+                    V_s[vi].add(si)
+                    V_d[vi].add(di)
+                    for k in xrange(k_0,end_time):
+                        if S[k][vi,di] > 0:
+                            d_tk = D[t][si,vi]
+                            if d_tk < k-t:
+                                d_tk = k-t
+                            d_kj = D[k][vi,di]
+                            if D[t][si,di] == d_tk + d_kj:
+                                if np.isnan(S[t][si,vi]*S[k][vi,di]/S[t][si,di]):
+                                    print "Whoops! %d %d %d"%(si,vi,di)
+                                    print (S[t][si,vi],S[k][vi,di],S[t][si,di])
+                                    raw_input()
+                                betweenness[vi] += S[t][si,vi]*S[k][vi,di]/S[t][si,di]
+                                if np.isnan(betweenness[vi]):
+                                    print "Whoops! bt is nan, %d %d %d"%(si,vi,di)
+                                    print (S[t][si,vi],S[k][vi,di],S[t][si,di])
+                                    raw_input()
+                        else:
+                            # no path will exist for t>k
+                            break
                 # end for vi
             # end for di
         # end for si
         #print "betweenness computation done for time %d"%(t)
         #print "number of vertex triplets visited for betweennness %d"%(total_its)
-    #betweenness = betweenness/(0.5*(n-1)*(n-2)*m)
-    print V_s
-    print V_d
-    norm_ct = np.array([(0.5*m*len(V_s[vi])*len(V_d[vi])) for vi in xrange(n)])
-    print norm_ct
-    betweenness = np.divide(betweenness,0.5*np.power(norm_ct,1))
+    norm_ct = np.zeros(n)
+    for vi in xrange(n):
+        if len(V_s[vi]) > 1:
+            V_s[vi].remove(vi)
+        if len(V_d[vi]) > 1:
+            V_d[vi].remove(vi)
+        norm_ct[vi] = m*(len(V_s[vi])*len(V_d[vi]))
+    #print V_s
+    #print V_d
+    #print norm_ct
+    #betweenness = betweenness/((n-1)*(n-2)*m)
+    betweenness = np.divide(betweenness,norm_ct)
 
     return dict(zip(verts,betweenness))
 
 def compute_static_graph_statistics(G,start_time,end_time):
     verts = G.vertices
     n = len(verts)
-    m = end_time - start_time
+    m = float(end_time - start_time)
     agg_statistics = [dict.fromkeys(verts,0),dict.fromkeys(verts,0),dict.fromkeys(verts,0)]*3
     avg_statistics = [dict.fromkeys(verts,0),dict.fromkeys(verts,0),dict.fromkeys(verts,0)]*3
 
     aggregated_graph = nx.Graph()
     aggregated_graph.add_nodes_from(verts)
+    start_time = max(1,start_time)
     for t in xrange(start_time,end_time+1):
         aggregated_graph.add_edges_from(G.snapshots[t].edges_iter())
          
-        dc = nx.degree_centrality(G.snapshots[t])
+        dc = G.snapshots[t].degree()
         cc = nx.closeness_centrality(G.snapshots[t])
         bc = nx.betweenness_centrality(G.snapshots[t])
         for v in verts:
-            avg_statistics[0][v] += dc[v]/m
-            avg_statistics[1][v] += cc[v]/m
-            avg_statistics[2][v] += bc[v]/m
-
+            avg_statistics[0][v] += dc[v]/(n-1.0)
+            avg_statistics[1][v] += cc[v]
+            avg_statistics[2][v] += bc[v]
+    for v in verts:
+        avg_statistics[0][v] = avg_statistics[0][v]/m
+        avg_statistics[1][v] = avg_statistics[1][v]/m
+        avg_statistics[2][v] = avg_statistics[2][v]/m
     
     dc = nx.degree_centrality(aggregated_graph)
     cc = nx.closeness_centrality(aggregated_graph)

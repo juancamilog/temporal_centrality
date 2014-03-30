@@ -21,7 +21,10 @@ d_acc = dict.fromkeys(('avg_deg','avg_cl','avg_bt','agg_deg','agg_cl','agg_bt','
 
 for name in glob.glob(os.path.join(working_dir,"results/tmg_4_*")):
     print "Processing file %s"%(name)
-    (tmg,data) = load(name)
+    try:
+       (tmg,data) = load(name)
+    except:
+        continue
     # for each graph statistic, we want to see if it can be used to correctly identify the highest mobility merchant
     idx_mobility = -1
     idx_data = dict.fromkeys(('avg_deg','avg_cl','avg_bt','agg_deg','agg_cl','agg_bt','t_deg','t_cl','t_bt'),-1)
